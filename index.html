@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1a1a1a">
+<title>Claude Usage</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: transparent; color: white; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+  body { min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 6px; }
+  .widget { width: 100%; max-width: 420px; background: rgba(20, 20, 20, 0.88); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 12px 14px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); transition: transform 0.15s ease; }
+  .widget.flash { transform: scale(1.02); }
+  .top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .title-row { display: flex; align-items: baseline; gap: 8px; }
+  .title { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-weight: 500; font-size: 15px; letter-spacing: -0.01em; }
+  .plan-badge { font-size: 10px; color: #999; letter-spacing: 0.1em; font-weight: 600; }
+  .icon-btn { width: 26px; height: 26px; border-radius: 8px; background: rgba(255,255,255,0.06); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; color: #aaa; }
+  .icon-btn:active { background: rgba(255,255,255,0.12); }
+  .bars-row { display: flex; gap: 12px; align-items: center; }
+  .bar-block { flex: 1; min-width: 0; }
+  .bar-top { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px; }
+  .bar-label { font-size: 10px; color: #888; letter-spacing: 0.08em; font-weight: 600; }
+  .bar-pct { font-size: 11px; color: #ddd; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .bar { height: 4px; background: rgba(255,255,255,0.08); border-radius: 99px; overflow: hidden; }
+  .bar-fill { height: 100%; background: #d97757; border-radius: 99px; transition: width 0.5s ease; }
+  .bar-reset { font-size: 10px; color: #777; margin-top: 4px; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .plus-btn { width: 46px; height: 46px; border-radius: 14px; background: #d97757; border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; flex-shrink: 0; box-shadow: 0 4px 12px rgba(217, 119, 87, 0.4); transition: transform 0.1s ease; }
+  .plus-btn:active { transform: scale(0.93); }
+  .overlay { position: fixed; inset: 0; z-index: 50; background: rgba(0,0,0,0.7); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); display: none; align-items: flex-end; justify-content: center; cursor: pointer; }
+  .overlay.show { display: flex; }
+  .sheet { width: 100%; max-width: 420px; background: #1f1f1d; border-top-left-radius: 24px; border-top-right-radius: 24px; padding: 20px; max-height: 90vh; overflow-y: auto; animation: slideUp 0.3s ease; cursor: default; }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .sheet-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+  .sheet h3 { font-family: 'Fraunces', Georgia, serif; font-style: italic; font-weight: 500; font-size: 22px; color: white; }
+  .close-btn { width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.08); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; }
+  .section { margin-bottom: 18px; }
+  .section-label { font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase; color: #999; font-weight: 600; margin-bottom: 8px; }
+  .plans { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .plan { padding: 10px 12px; border-radius: 12px; text-align: left; background: rgba(255,255,255,0.05); border: 1px solid transparent; cursor: pointer; color: white; font-family: inherit; }
+  .plan.active { background: rgba(217, 119, 87, 0.15); border-color: #d97757; }
+  .plan-name { font-size: 14px; font-weight: 600; }
+  .plan-meta { font-size: 11px; color: #888; margin-top: 2px; }
+  .toggle-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .toggle { padding: 5px 12px; border-radius: 99px; background: rgba(255,255,255,0.08); color: #999; font-size: 10px; font-weight: 600; letter-spacing: 0.1em; border: none; cursor: pointer; }
+  .toggle.on { background: #d97757; color: white; }
+  .inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .input-group label { display: block; font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+  .input-group input { width: 100%; padding: 9px 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: white; font-size: 15px; outline: none; font-family: inherit; }
+  .input-group input:focus { border-color: rgba(217, 119, 87, 0.5); }
+  .actions { display: flex; gap: 8px; margin-bottom: 14px; }
+  .action-btn { flex: 1; padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: white; font-size: 13px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 6px; cursor: pointer; font-family: inherit; }
+  .action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .action-btn.danger { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.3); color: #fca5a5; }
+  .info { background: rgba(255,255,255,0.03); border-radius: 10px; padding: 10px; font-size: 11px; color: #888; line-height: 1.5; }
+  .info strong { color: #bbb; }
+</style>
+</head>
+<body>
+  <div class="widget" id="widget">
+    <div class="top">
+      <div class="title-row">
+        <span class="title">Nutzung</span>
+        <span class="plan-badge" id="plan-badge">PRO</span>
+      </div>
+      <button class="icon-btn" id="open-settings" aria-label="Einstellungen">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+      </button>
+    </div>
+    <div class="bars-row">
+      <div class="bar-block">
+        <div class="bar-top"><span class="bar-label">5H</span><span class="bar-pct" id="pct-5h">0%</span></div>
+        <div class="bar"><div class="bar-fill" id="fill-5h" style="width:0%"></div></div>
+        <div class="bar-reset" id="reset-5h">inaktiv</div>
+      </div>
+      <div class="bar-block">
+        <div class="bar-top"><span class="bar-label">WOCHE</span><span class="bar-pct" id="pct-wk">0%</span></div>
+        <div class="bar"><div class="bar-fill" id="fill-wk" style="width:0%"></div></div>
+        <div class="bar-reset" id="reset-wk">inaktiv</div>
+      </div>
+      <button class="plus-btn" id="add-btn" aria-label="Nachricht zaehlen">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="overlay" id="overlay">
+    <div class="sheet" onclick="event.stopPropagation()">
+      <div class="sheet-head">
+        <h3>Einstellungen</h3>
+        <button class="close-btn" id="close-settings" aria-label="Schliessen">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="section">
+        <div class="section-label">Plan</div>
+        <div class="plans" id="plans"></div>
+      </div>
+      <div class="section">
+        <div class="toggle-row">
+          <div class="section-label" style="margin-bottom:0">Custom-Limits</div>
+          <button class="toggle" id="custom-toggle">AUS</button>
+        </div>
+        <div class="inputs">
+          <div class="input-group"><label>5h-Limit</label><input type="number" id="input-5h" min="1" inputmode="numeric"></div>
+          <div class="input-group"><label>Woche</label><input type="number" id="input-wk" min="1" inputmode="numeric"></div>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="action-btn" id="undo-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14l-4-4 4-4"></path><path d="M5 10h11a4 4 0 0 1 0 8h-1"></path></svg>
+          Letzte Undo
+        </button>
+        <button class="action-btn danger" id="reset-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 4v6h6"></path><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path></svg>
+          Reset alle
+        </button>
+      </div>
+      <div class="info">
+        <strong>So funktioniert's:</strong> Tippe das "+" nach jeder Nachricht an Claude. Reset-Timer fuer 5h-Fenster und Woche zaehlen live herunter. Daten werden lokal im Browser/Widget gespeichert. Anthropic veroeffentlicht keine exakten Limits — Custom-Werte anhand der echten App-Anzeige kalibrieren.
+      </div>
+    </div>
+  </div>
+
+<script>
+const PLANS = {
+  free:  { name: 'Free',    fiveHour: 10,  weekly: 50 },
+  pro:   { name: 'Pro',     fiveHour: 45,  weekly: 225 },
+  max5:  { name: 'Max 5x',  fiveHour: 225, weekly: 1125 },
+  max20: { name: 'Max 20x', fiveHour: 900, weekly: 4500 },
+};
+const STORAGE_KEY = 'claude-tracker-v1';
+const FIVE_HOURS = 5 * 3600 * 1000;
+const SEVEN_DAYS = 7 * 24 * 3600 * 1000;
+let state = { messages: [], plan: 'pro', customLimits: { fiveHour: 45, weekly: 225 }, useCustom: false };
+
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const s = JSON.parse(raw);
+      if (Array.isArray(s.messages)) state.messages = s.messages;
+      if (s.plan && PLANS[s.plan]) state.plan = s.plan;
+      if (s.customLimits && typeof s.customLimits.fiveHour === 'number') state.customLimits = s.customLimits;
+      if (typeof s.useCustom === 'boolean') state.useCustom = s.useCustom;
+    }
+  } catch (e) {}
+}
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+}
+function formatShort(ms) {
+  if (ms <= 0) return '—';
+  const totalMin = Math.floor(ms / 60000);
+  const d = Math.floor(totalMin / (60 * 24));
+  const h = Math.floor((totalMin % (60 * 24)) / 60);
+  const m = totalMin % 60;
+  if (d > 0) return d + 'd ' + h + 'h';
+  if (h > 0) return h + 'h ' + String(m).padStart(2,'0') + 'm';
+  return m + 'm';
+}
+function update() {
+  const now = Date.now();
+  const msg5h = state.messages.filter(function(t) { return t >= now - FIVE_HOURS; });
+  const msgWk = state.messages.filter(function(t) { return t >= now - SEVEN_DAYS; });
+  const oldest5h = msg5h.length ? Math.min.apply(null, msg5h) : null;
+  const oldest7d = msgWk.length ? Math.min.apply(null, msgWk) : null;
+  const reset5h = oldest5h ? oldest5h + FIVE_HOURS - now : 0;
+  const reset7d = oldest7d ? oldest7d + SEVEN_DAYS - now : 0;
+  const limits = state.useCustom ? state.customLimits : PLANS[state.plan];
+  const pct5 = Math.min(100, (msg5h.length / limits.fiveHour) * 100);
+  const pctW = Math.min(100, (msgWk.length / limits.weekly) * 100);
+  document.getElementById('plan-badge').textContent = state.useCustom ? 'CUSTOM' : PLANS[state.plan].name.toUpperCase();
+  document.getElementById('pct-5h').textContent = Math.round(pct5) + '%';
+  document.getElementById('pct-wk').textContent = Math.round(pctW) + '%';
+  document.getElementById('fill-5h').style.width = pct5 + '%';
+  document.getElementById('fill-wk').style.width = pctW + '%';
+  document.getElementById('reset-5h').textContent = oldest5h ? 'Reset ' + formatShort(reset5h) : 'inaktiv';
+  document.getElementById('reset-wk').textContent = oldest7d ? 'Reset ' + formatShort(reset7d) : 'inaktiv';
+}
+function renderPlans() {
+  const container = document.getElementById('plans');
+  container.innerHTML = '';
+  Object.keys(PLANS).forEach(function(key) {
+    const p = PLANS[key];
+    const btn = document.createElement('button');
+    btn.className = 'plan' + (!state.useCustom && state.plan === key ? ' active' : '');
+    btn.innerHTML = '<div class="plan-name">' + p.name + '</div><div class="plan-meta">' + p.fiveHour + '/5h &middot; ' + p.weekly + '/Wo</div>';
+    btn.onclick = function() {
+      state.plan = key; state.useCustom = false;
+      saveState(); renderPlans(); renderToggle(); update();
+    };
+    container.appendChild(btn);
+  });
+}
+function renderToggle() {
+  const t = document.getElementById('custom-toggle');
+  t.textContent = state.useCustom ? 'AKTIV' : 'AUS';
+  t.className = 'toggle' + (state.useCustom ? ' on' : '');
+}
+function renderInputs() {
+  document.getElementById('input-5h').value = state.customLimits.fiveHour;
+  document.getElementById('input-wk').value = state.customLimits.weekly;
+}
+function flash() {
+  const w = document.getElementById('widget');
+  w.classList.add('flash');
+  setTimeout(function() { w.classList.remove('flash'); }, 250);
+}
+document.getElementById('add-btn').onclick = function() {
+  state.messages.push(Date.now()); saveState(); flash(); update();
+};
+document.getElementById('open-settings').onclick = function() {
+  renderPlans(); renderToggle(); renderInputs();
+  document.getElementById('overlay').classList.add('show');
+};
+document.getElementById('close-settings').onclick = function() {
+  document.getElementById('overlay').classList.remove('show');
+};
+document.getElementById('overlay').onclick = function(e) {
+  if (e.target.id === 'overlay') document.getElementById('overlay').classList.remove('show');
+};
+document.getElementById('custom-toggle').onclick = function() {
+  state.useCustom = !state.useCustom; saveState(); renderPlans(); renderToggle(); update();
+};
+document.getElementById('input-5h').oninput = function(e) {
+  state.customLimits.fiveHour = Math.max(1, parseInt(e.target.value) || 1); saveState(); update();
+};
+document.getElementById('input-wk').oninput = function(e) {
+  state.customLimits.weekly = Math.max(1, parseInt(e.target.value) || 1); saveState(); update();
+};
+document.getElementById('undo-btn').onclick = function() {
+  if (state.messages.length === 0) return;
+  state.messages.pop(); saveState(); update();
+};
+document.getElementById('reset-btn').onclick = function() {
+  if (confirm('Alle Tracking-Daten loeschen?')) { state.messages = []; saveState(); update(); }
+};
+loadState(); update(); setInterval(update, 1000);
+</script>
+</body>
+</html>
